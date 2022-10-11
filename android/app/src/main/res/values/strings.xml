@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Statement Test</string>]
+
+    <string name="auto_fill_details">Auto Fill Details</string>
+    <string name="api_key">API Key</string>
+    <string name="use_remember_me">Use Remember Me</string>
+    <string name="enable_auto_consent">Enable Auto Consent</string>
+    <string name="org_name">Organizational Name</string>
+    <string name="external_id">External ID</string>
+    <string name="success_url">Success URL</string>
+    <string name="fail_url">Fail URL</string>
+    <string name="select_country">Select Country</string>
+    <string name="select_banks">Select Banks</string>
+    <string name="checkout">Checkout</string>
+    <string name="retrieve_statements">Statement Retrieval</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="statement_list">Statement List</string>
+    <string name="close">Close</string>
+    <string name="action_bar_text">Action Bar Text</string>
+    <string name="download_statement">Download Statement</string>
+    <string name="personal">Personal</string>
+    <string name="corporate">Corporate</string>
+    <string name="bank_logo">Bank Logo</string>
+</resources>

@@ -1,0 +1,14 @@
+{
+  "pins" : [
+    {
+      "identity" : "core-sdk-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/brankas/core-sdk-ios",
+      "state" : {
+        "branch" : "master",
+        "revision" : "17cb0ff49cb10309c68ad573c2782018cfc779fa"
+      }
+    }
+  ],
+  "version" : 2
+}

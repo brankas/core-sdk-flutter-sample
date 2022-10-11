@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#9258E1</color>
+    <color name="colorPrimaryDark">#9258E1</color>
+    <color name="button_disabled">#E2E2E2</color>
+    <color name="separator_line_color">#EEEEEE</color>
+
+</resources>
