@@ -29,9 +29,9 @@ The next set of instructions assume that **Flutter** and **Dart** plugins are al
 
 **To run on iOS Device**:
 1. Open Xcode and import the project
-2. Download Direct Tap Framework via Swift Package Manager. To integrate, click your project > **Package Dependencies**, then the '+' button <br/><br/>![](images/project.png)
+2. Download  Statement Tap Framework via Swift Package Manager. To integrate, click your project > **Package Dependencies**, then the '+' button <br/><br/>![](images/project.png)
 3. On the search bar, enter the URL: **https://github.com/brankas/core-sdk-ios**. Wait for the repository to be loaded then click **Add Package** <br/><br/>![](images/repo.png)
-4. Check **DirectTap** then click on **Add Package** <br/><br/>![](images/check_direct.png)
+4. Check **StatementTap** then click on **Add Package** <br/><br/>![](images/check_statement.png)
 5.  Check if package has already been added as a dependency <br/><br/>![](images/check_package.png)
 6. Go to **Frameworks, Libraries and Embedded Content** and check if the selected framework has been added <br/><br/>![](images/framework.png)
 7. The application can now be run on an iOS Device or Simulator
