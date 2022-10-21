@@ -27,7 +27,7 @@ class MainActivity: FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor, directTapChannel).setMethodCallHandler { call, result ->
             when(call.method) {
                 "checkout" -> {
-                    DirectTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(), isDebug = true)
+                    DirectTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(), isDebug = false)
 
                     val bankCode: Int = call.argument<Int>("sourceBank")!!
                     var bank: BankCode? = null
@@ -85,17 +85,17 @@ class MainActivity: FlutterActivity() {
                     result.success(DirectTapSDK.getSDKVersion())
                 }
                 "getBanks" -> {
-                    DirectTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!, isDebug = true)
+                    DirectTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!, isDebug = false)
                     DirectTapSDK.getSourceBanks(getCountry(call.argument("country")!!),
                             getBankCode(call.argument("bank")!!), object:
                         CoreListener<List<Bank>> {
                         override fun onResult(data: List<Bank>?, error: CoreError?) {
                             data?.let { bankList ->
                                 banks.clear()
-                                banks.addAll(bankList)
-                                val bankNames = bankList.map { bank -> bank.title }
-                                val bankCodes = bankList.map { bank -> bank.bankCode.value }
-                                val bankIcons = bankList.map { bank ->
+                                banks.addAll(bankList.filter { it.isEnabled })
+                                val bankNames = banks.map { bank -> bank.title }
+                                val bankCodes = banks.map { bank -> bank.bankCode.value }
+                                val bankIcons = banks.map { bank ->
                                     bank.logoUrl
                                 }
                                 result.success(listOf(bankNames, bankCodes, bankIcons))
