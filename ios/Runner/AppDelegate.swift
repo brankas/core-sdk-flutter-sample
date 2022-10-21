@@ -29,7 +29,7 @@ import DirectTapFramework
           switch call.method {
             case "checkout" :
               if let args = call.arguments as? Dictionary<String, Any> {
-                  DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: true)
+                  DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false)
                   
                   let bankCode = args["sourceBank"] as? Int
                   var bank: DirectBankCode? = nil
@@ -77,13 +77,13 @@ import DirectTapFramework
                 result(DirectTapSF.shared.getFrameworkVersion())
             case "getBanks":
                 if let args = call.arguments as? Dictionary<String, Any> {
-                    DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: true)
+                    DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false)
                     let getBanks = { (bankList: [DirectBank], error: String?)  in
                         if !bankList.isEmpty {
-                            self.banks = bankList
-                            let bankNames = bankList.map { $0.title }
-                            let bankCodes = bankList.map { $0.bankCode.value }
-                            let bankIcons = bankList.map { $0.logoUrl }
+                            self.banks = bankList.filter{ $0.isEnabled }
+                            let bankNames = self.banks.map { $0.title }
+                            let bankCodes = self.banks.map { $0.bankCode.value }
+                            let bankIcons = self.banks.map { $0.logoUrl }
                             let bankDetails: [[Any]] = [bankNames, bankCodes, bankIcons]
                             result(bankDetails)
                         }
