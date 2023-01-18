@@ -1,6 +1,7 @@
 import UIKit
 import Flutter
 import DirectTapFramework
+import AppTrackingTransparency
 
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
@@ -24,12 +25,28 @@ import DirectTapFramework
       self.navigationController.setNavigationBarHidden(true, animated: false)
       self.window.makeKeyAndVisible()
       
+// Comment out if App Tracking Transparency wants to be integrated
+//      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: {
+//          if #available(iOS 14, *) {
+//              ATTrackingManager.requestTrackingAuthorization { status in
+//                  switch status {
+//                      case .authorized:
+//                            directTapChannel.invokeMethod("updateLogging", arguments: true)
+//                      case .denied:
+//                            directTapChannel.invokeMethod("updateLogging", arguments: false)
+//                      default:
+//                            directTapChannel.invokeMethod("updateLogging", arguments: false)
+//                  }
+//              }
+//          }
+//      })
+      
       directTapChannel.setMethodCallHandler({(call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
                 
           switch call.method {
             case "checkout" :
               if let args = call.arguments as? Dictionary<String, Any> {
-                  DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false)
+                  DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false, isLoggingEnabled: args["logging"] as? Bool ?? true)
                   
                   let bankCode = args["sourceBank"] as? Int
                   var bank: DirectBankCode? = nil
@@ -52,6 +69,7 @@ import DirectTapFramework
                   client.displayName = args["orgName"] as? String ?? ""
                   client.returnUrl = args["returnURL"] as? String ?? ""
                   client.failUrl = args["failURL"] as? String ?? ""
+                  client.language = self.getLanguage(language: args["language"] as? String ?? "")
                   
                   let referenceID = args["referenceId"] as? String ?? ""
                   
@@ -77,7 +95,7 @@ import DirectTapFramework
                 result(DirectTapSF.shared.getFrameworkVersion())
             case "getBanks":
                 if let args = call.arguments as? Dictionary<String, Any> {
-                    DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false)
+                    DirectTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false, isLoggingEnabled: args["logging"] as? Bool ?? true)
                     let getBanks = { (bankList: [DirectBank], error: String?)  in
                         if !bankList.isEmpty {
                             self.banks = bankList.filter{ $0.isEnabled }
@@ -159,6 +177,15 @@ import DirectTapFramework
             case "BRI": return DirectBankCode.BRI
             case "Mandiri": return DirectBankCode.Mandiri
             default: return DirectBankCode.BDO
+        }
+    }
+    
+    private func getLanguage(language: String) -> Language {
+        switch language {
+            case "Indonesian":
+                return Language.Indonesian
+            default:
+                return Language.English
         }
     }
 }

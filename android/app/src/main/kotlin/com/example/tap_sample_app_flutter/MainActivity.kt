@@ -27,7 +27,8 @@ class MainActivity: FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor, directTapChannel).setMethodCallHandler { call, result ->
             when(call.method) {
                 "checkout" -> {
-                    DirectTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(), isDebug = false)
+                    DirectTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(), isDebug = false,
+                        isLoggingEnabled = call.argument<Boolean>("logging")!!)
 
                     val bankCode: Int = call.argument<Int>("sourceBank")!!
                     var bank: BankCode? = null
@@ -40,6 +41,7 @@ class MainActivity: FlutterActivity() {
                     val countryCode = if(country == "Indonesia") Country.ID else Country.PH
 
                     val currency = if(countryCode == Country.PH) Currency.PHP else Currency.IDR
+                    val language = getLanguage(call.argument<String>("language").orEmpty())
 
                     // Amount should be in centavos; thus, needs to be multiplied to 100
                     val amount = (call.argument<String>("amount")!!.toDouble() * 100).toInt().toString()
@@ -59,7 +61,7 @@ class MainActivity: FlutterActivity() {
                         .referenceId(call.argument<String>("referenceId").orEmpty())
                         .client(Client(call.argument<String>("orgName").orEmpty(), logoURL,
                             call.argument<String>("successURL").orEmpty(),
-                            call.argument<String>("failURL").orEmpty()))
+                            call.argument<String>("failURL").orEmpty(), language = language))
                         .dismissalDialog(
                             DismissalDialog("Do you want to close the application?",
                                 "Yes", "No")
@@ -85,29 +87,30 @@ class MainActivity: FlutterActivity() {
                     result.success(DirectTapSDK.getSDKVersion())
                 }
                 "getBanks" -> {
-                    DirectTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!, isDebug = false)
+                    DirectTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!,
+                        isDebug = false, isLoggingEnabled = call.argument<Boolean>("logging")!!)
                     DirectTapSDK.getSourceBanks(getCountry(call.argument("country")!!),
-                            getBankCode(call.argument("bank")!!), object:
-                        CoreListener<List<Bank>> {
-                        override fun onResult(data: List<Bank>?, error: CoreError?) {
-                            data?.let { bankList ->
-                                banks.clear()
-                                banks.addAll(bankList.filter { it.isEnabled })
-                                val bankNames = banks.map { bank -> bank.title }
-                                val bankCodes = banks.map { bank -> bank.bankCode.value }
-                                val bankIcons = banks.map { bank ->
-                                    bank.logoUrl
+                        getBankCode(call.argument("bank")!!), object:
+                            CoreListener<List<Bank>> {
+                            override fun onResult(data: List<Bank>?, error: CoreError?) {
+                                data?.let { bankList ->
+                                    banks.clear()
+                                    banks.addAll(bankList.filter { it.isEnabled })
+                                    val bankNames = banks.map { bank -> bank.title }
+                                    val bankCodes = banks.map { bank -> bank.bankCode.value }
+                                    val bankIcons = banks.map { bank ->
+                                        bank.logoUrl
+                                    }
+                                    result.success(listOf(bankNames, bankCodes, bankIcons))
+                                } ?: run {
+                                    error?.errorMessage?.let {
+                                        Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
+                                    }
+                                    result.error("Failed to retrieve source banks",
+                                        "Failed to retrieve source banks", "Failed to retrieve source banks")
                                 }
-                                result.success(listOf(bankNames, bankCodes, bankIcons))
-                            } ?: run {
-                                error?.errorMessage?.let {
-                                    Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show()
-                                }
-                                result.error("Failed to retrieve source banks",
-                                    "Failed to retrieve source banks", "Failed to retrieve source banks")
                             }
-                        }
-                    })
+                        })
                 }
                 else -> result.notImplemented()
             }
@@ -133,6 +136,13 @@ class MainActivity: FlutterActivity() {
         return when(country) {
             "Indonesia" -> Country.ID
             else -> Country.PH
+        }
+    }
+
+    private fun getLanguage(language: String): Language {
+        return when(language) {
+            "Indonesian" -> tap.model.direct.Language.INDONESIAN
+            else -> Language.ENGLISH
         }
     }
 

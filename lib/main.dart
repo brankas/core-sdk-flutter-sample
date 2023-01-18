@@ -36,6 +36,8 @@ class _MainPageState extends State<MainPage> {
   bool actionBarEnabled = false;
   bool expiryDateEnabled = false;
   bool logoURLEnabled = false;
+  bool loggingEnabled = true;
+  bool showLogging = true;
   DateTime expiryDate = DateTime.now();
 
   static const MethodChannel directChannel = MethodChannel('com.brankas.tap/direct');
@@ -58,6 +60,7 @@ class _MainPageState extends State<MainPage> {
   List<String> destinationBanksPH = ["None", "BDO", "BPI", "EastWest", "LandBank",
     "MetroBank", "PNB", "RCBC", "UnionBank"];
   List<String> destinationBanksID = ["None", "BCA", "BNI", "BRI", "Mandiri"];
+  List<String> languages = ["English", "Indonesian"];
   List<String> destinationBanks = [];
   List<String> sourceBankNames = [];
   List<int> sourceBankCodes = [];
@@ -67,6 +70,7 @@ class _MainPageState extends State<MainPage> {
   String destinationBank = "None";
   int bankCode = 0;
   String bankLogo = "";
+  String language = "English";
 
   Future<void> checkout() async {
     try {
@@ -80,7 +84,8 @@ class _MainPageState extends State<MainPage> {
         "rememberMe" : useRememberMe, "actionBarText" : actionBarEnabled ?
         actionBarController.text : null, "logoURL" :
         logoURLEnabled ? logoURLController.text : null,
-        "expiryDate" : expiryDateEnabled ? expiryDate.millisecondsSinceEpoch : null});
+        "expiryDate" : expiryDateEnabled ? expiryDate.millisecondsSinceEpoch : null,
+      "language" : language, "logging": loggingEnabled});
     } on PlatformException catch (e) {
 
     }
@@ -105,7 +110,8 @@ class _MainPageState extends State<MainPage> {
       List<Object?> banks = [];
       try {
         banks = await directChannel.invokeMethod(
-            'getBanks', {"country": country, "bank": bank, "apiKey" : apiKeyController.text});
+            'getBanks', {"country": country, "bank": bank,
+          "apiKey" : apiKeyController.text, "logging" : loggingEnabled});
       } on PlatformException catch (e) {
 
       }
@@ -150,6 +156,12 @@ class _MainPageState extends State<MainPage> {
       else {
         destinationBanks = destinationBanksID;
       }
+    });
+  }
+
+  void updateLanguage(String language) {
+    setState(() {
+      this.language = language;
     });
   }
 
@@ -208,6 +220,12 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void toggleLogging(bool value) {
+    setState(() {
+      loggingEnabled = value;
+    });
+  }
+
   Future<void> showPicker(BuildContext context) async {
     DateTime date = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -222,6 +240,21 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  Future<void> methodHandler(MethodCall call) async {
+    final bool loggingEnabled = call.arguments;
+
+    switch (call.method) {
+      case "updateLogging":
+        setState(() {
+          showLogging = false;
+        });
+        this.loggingEnabled = loggingEnabled;
+        break;
+      default:
+        print('no method handler for method ${call.method}');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -230,6 +263,7 @@ class _MainPageState extends State<MainPage> {
     destinationAccountIdController.text = "";
     destinationBanks = destinationBanksPH;
     destinationBank = destinationBanks[0];
+    directChannel.setMethodCallHandler(this.methodHandler);
   }
 
   @override
@@ -258,6 +292,15 @@ class _MainPageState extends State<MainPage> {
                         ),
                       ),
                     ),
+                    if(showLogging)
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            const Text("Enable Logging"),
+                            Switch(onChanged: toggleLogging,
+                                value: loggingEnabled,
+                                activeColor: Colors.blue)
+                          ]
+                      ),
                     Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           const Text("Use Remember Me"),
@@ -485,6 +528,26 @@ class _MainPageState extends State<MainPage> {
                           )
                         )
                       )],
+                    const Text("Select Language", style: TextStyle(color: Colors.blue)),
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 60,
+                          child: DropdownButton(value: language,
+                            icon: const Icon(Icons.flag),
+                            items: languages.map((String items) {
+                              return DropdownMenuItem(
+                                value: items,
+                                child: Text(items),
+                              );
+                            }).toList(),
+                            onChanged: (String? language) {
+                              updateLanguage(language!);
+                            },
+                          ),
+                        )
+                    ),
                     if(actionBarEnabled)
                       Padding(
                         padding: const EdgeInsets.symmetric(
