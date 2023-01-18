@@ -37,6 +37,9 @@ class _MainPageState extends State<MainPage> {
   bool actionBarEnabled = false;
   bool autoConsentEnabled = false;
   bool statementRetrievalEnabled = false;
+  bool loggingEnabled = true;
+  bool balanceRetrievalEnabled = false;
+  bool showLogging = true;
 
   static const MethodChannel statementChannel = MethodChannel('com.brankas.tap/statement');
 
@@ -65,7 +68,6 @@ class _MainPageState extends State<MainPage> {
           banks.add(bankNames[i]);
         }
       }
-      print("BANK SIZE: ${banks.length}");
       statementChannel.invokeMethod('checkout', {"apiKey" : apiKeyController.text,
         "orgName" : orgNameController.text, "successURL" : successURLController.text,
         "failURL" : failURLController.text, "country" : country, "banks" : banks,
@@ -74,7 +76,8 @@ class _MainPageState extends State<MainPage> {
         "autoConsent" : autoConsentEnabled, "startDate" :
         statementRetrievalEnabled ? startDate.millisecondsSinceEpoch : null,
         "endDate" :
-        statementRetrievalEnabled ? endDate.millisecondsSinceEpoch : null});
+        statementRetrievalEnabled ? endDate.millisecondsSinceEpoch : null,
+        "logging" : loggingEnabled, "balanceRetrieval" : balanceRetrievalEnabled});
     } on PlatformException catch (e) {
 
     }
@@ -98,7 +101,9 @@ class _MainPageState extends State<MainPage> {
     List<Object?> banks = [];
     try {
       banks = await statementChannel.invokeMethod(
-          'getEnabledBanks', {"country": country, "apiKey" : apiKeyController.text});
+          'getEnabledBanks', {"country": country,
+        "apiKey" : apiKeyController.text, "logging" : loggingEnabled,
+        "balanceRetrieval" : balanceRetrievalEnabled});
     } on PlatformException catch (e) {
 
     }
@@ -172,6 +177,19 @@ class _MainPageState extends State<MainPage> {
     });
   }
 
+  void toggleLogging(bool value) {
+    setState(() {
+      loggingEnabled = value;
+    });
+  }
+
+  void toggleBalanceRetrieval(bool value) {
+    setState(() {
+      balanceRetrievalEnabled = value;
+      getBanks();
+    });
+  }
+
   Future<void> showPicker(BuildContext context, DateTime date) async {
     DateTime date = DateTime.now();
     final DateTime? picked = await showDatePicker(
@@ -186,10 +204,23 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  Future<void> methodHandler(MethodCall call) async {
+    final bool loggingEnabled = call.arguments;
+
+    switch (call.method) {
+      case "updateLogging":
+        showLogging = false;
+        this.loggingEnabled = loggingEnabled;
+        break;
+      default:
+        print('no method handler for method ${call.method}');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    statementChannel.setMethodCallHandler(methodHandler);
     getSDKVersion();
     apiKeyController.text = "";
     getBanks();
@@ -221,6 +252,15 @@ class _MainPageState extends State<MainPage> {
                         ),
                       ),
                     ),
+                    if(showLogging)
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            const Text("Enable Logging"),
+                            Switch(onChanged: toggleLogging,
+                                value: loggingEnabled,
+                                activeColor: Colors.purple)
+                          ]
+                      ),
                     Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: <Widget>[
                           const Text("Use Remember Me"),
@@ -250,6 +290,14 @@ class _MainPageState extends State<MainPage> {
                           const Text("Enable Statement Retrieval"),
                           Switch(onChanged: toggleStatementRetrieval,
                               value: statementRetrievalEnabled,
+                              activeColor: Colors.purple)
+                        ]
+                    ),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          const Text("Enable Balance Retrieval"),
+                          Switch(onChanged: toggleBalanceRetrieval,
+                              value: balanceRetrievalEnabled,
                               activeColor: Colors.purple)
                         ]
                     ),

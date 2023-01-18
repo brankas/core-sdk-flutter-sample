@@ -3,9 +3,11 @@ package com.example.tap_sample_app_flutter
 import `as`.brank.sdk.core.CoreError
 import `as`.brank.sdk.core.CoreListener
 import `as`.brank.sdk.tap.statement.StatementTapSDK
+import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.os.Looper
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.AppCompatTextView
 import io.flutter.embedding.android.FlutterFragmentActivity
@@ -14,8 +16,10 @@ import io.flutter.plugin.common.MethodChannel
 import tap.model.Country
 import tap.model.DismissalDialog
 import tap.model.Reference
+import tap.model.balance.Account
 import tap.model.statement.Bank
 import tap.model.statement.Statement
+import tap.model.statement.StatementResponse
 import tap.request.statement.StatementRetrievalRequest
 import tap.request.statement.StatementTapRequest
 import java.util.*
@@ -31,7 +35,8 @@ class MainActivity: FlutterFragmentActivity() {
         MethodChannel(flutterEngine.dartExecutor, statementTapChannel).setMethodCallHandler { call, result ->
             when(call.method) {
                 "checkout" -> {
-                    StatementTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(), isDebug = false)
+                    StatementTapSDK.initialize(this, call.argument<String>("apiKey").orEmpty(),
+                        isDebug = false, isLoggingEnabled = call.argument<Boolean>("logging")!!)
 
                     val country: String = call.argument<String>("country").orEmpty()
                     val countryCode = getCountry(country)
@@ -44,8 +49,6 @@ class MainActivity: FlutterFragmentActivity() {
                         it.bankCode
                     }
 
-                    println("BANK CODES: "+bankCodes.size)
-
                     val request = StatementTapRequest.Builder()
                         .country(countryCode)
                         .externalId(call.argument<String>("externalID").orEmpty())
@@ -53,6 +56,7 @@ class MainActivity: FlutterFragmentActivity() {
                         .failURL(call.argument<String>("failURL").orEmpty())
                         .organizationName(call.argument<String>("orgName").orEmpty())
                         .bankCodes(bankCodes)
+                        .includeBalance(call.argument<Boolean>("balanceRetrieval")!!)
                         .dismissalDialog(
                             DismissalDialog("Do you want to close the application?",
                                 "Yes", "No")
@@ -94,8 +98,10 @@ class MainActivity: FlutterFragmentActivity() {
                     result.success(StatementTapSDK.getSDKVersion())
                 }
                 "getEnabledBanks" -> {
-                    StatementTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!, isDebug = false)
-                    StatementTapSDK.getEnabledBanks(getCountry(call.argument("country")!!), object:
+                    StatementTapSDK.initialize(this@MainActivity, call.argument("apiKey")!!, isDebug = false,
+                        isLoggingEnabled = call.argument<Boolean>("logging")!!)
+                    StatementTapSDK.getEnabledBanks(getCountry(call.argument("country")!!),
+                        call.argument<Boolean>("balanceRetrieval")!!, object:
                         CoreListener<List<Bank>> {
                         override fun onResult(data: List<Bank>?, error: CoreError?) {
                             data?.let { bankList ->
@@ -126,26 +132,30 @@ class MainActivity: FlutterFragmentActivity() {
         super.onActivityResult(requestCode, resultCode, data)
         if(requestCode == 2000) {
             if(resultCode == RESULT_OK) {
-                val statements = data?.getParcelableExtra<Reference<List<Statement>>>(
+                val statementResponse = data?.getParcelableExtra<Reference<StatementResponse>>(
                     StatementTapSDK.STATEMENTS)
                 var statementId = ""
                 val builder = StringBuilder()
 
-                statements?.get?.let { list ->
-                    list.forEach {
-                        statementId = it.id
-                        it.transactions.forEach { transaction ->
-                            builder.append("ACCOUNT: ${it.account.holderName} ${it.account.number} - ${it.transactions.size}")
-                            it.transactions.forEach { transaction ->
-                                builder.append("TRANSACTION: ${transaction.id} - ${it.account.holderName}")
+                statementResponse?.get?.let { response ->
+                    response.statementList?.let {
+                        statementId = response.statementId
+                        it.forEach { statement ->
+                            statement.transactions.forEach { _ ->
+                                builder.append("ACCOUNT: ${statement.account.holderName} ${statement.account.number} - ${statement.transactions.size}")
+                                statement.transactions.forEach { transaction ->
+                                    builder.append("TRANSACTION: ${transaction.id} - ${statement.account.holderName}")
+                                }
                             }
                         }
+                    } ?: run {
+                        statementId = response.statementId
                     }
                 } ?: run {
                     statementId = data?.getStringExtra(StatementTapSDK.STATEMENT_ID)!!
                 }
 
-                val dialogBuilder: androidx.appcompat.app.AlertDialog.Builder = androidx.appcompat.app.AlertDialog.Builder(this)
+                val dialogBuilder: AlertDialog.Builder = AlertDialog.Builder(this)
                 val contentView = layoutInflater.inflate(R.layout.dialog_statement, null)
                 val text = contentView.findViewById<AppCompatTextView>(R.id.statementList)
                 val closeButton = contentView.findViewById<AppCompatButton>(R.id.closeButton)
@@ -163,12 +173,19 @@ class MainActivity: FlutterFragmentActivity() {
                 val dialog = dialogBuilder.create()
                 dialog.show()
 
+                val accounts: List<Account>? = statementResponse?.get?.accountList
                 closeButton.setOnClickListener {
                     dialog.dismiss()
+                    accounts?.let {
+                        showAccounts(it)
+                    }
                 }
 
                 downloadButton.setOnClickListener {
                     dialog.dismiss()
+                    accounts?.let {
+                        showAccounts(it)
+                    }
                     StatementTapSDK.downloadStatement(this@MainActivity, statementId,
                         object: CoreListener<Pair<String?, ByteArray>> {
                             override fun onResult(data: Pair<String?, ByteArray>?, error: CoreError?) {
@@ -196,5 +213,25 @@ class MainActivity: FlutterFragmentActivity() {
             "Thailand" -> Country.TH
             else -> Country.PH
         }
+    }
+
+    private fun showAccounts(accounts: List<Account>) {
+        val dialogBuilder = AlertDialog.Builder(this, R.style.AlertDialogTheme)
+        val stringBuilder = StringBuilder()
+
+        accounts.forEach {
+            stringBuilder.append("Account: ${it.holderName} - ${it.number}: " +
+                    "${it.balance.currency}${it.balance.numInCents.toLong() / 100}")
+            stringBuilder.appendLine()
+        }
+
+        dialogBuilder.setMessage(stringBuilder.toString())
+            .setCancelable(false)
+            .setPositiveButton("OK") { dialogInterface, _ ->
+                dialogInterface.dismiss()
+            }
+
+        val alert = dialogBuilder.create()
+        alert.show()
     }
 }
