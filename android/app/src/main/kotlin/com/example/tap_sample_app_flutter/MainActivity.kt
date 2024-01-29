@@ -57,9 +57,11 @@ class MainActivity: FlutterFragmentActivity() {
                         .organizationName(call.argument<String>("orgName").orEmpty())
                         .bankCodes(bankCodes)
                         .includeBalance(call.argument<Boolean>("balanceRetrieval")!!)
+                        .hasPdfUpload(call.argument<Boolean>("pdfUpload")!!)
                         .dismissalDialog(
                             DismissalDialog("Do you want to close the application?",
                                 "Yes", "No")
+
                         ).apply {
                             val statementRetrievalBuilder = StatementRetrievalRequest.Builder()
                             var hasRetrieval = false

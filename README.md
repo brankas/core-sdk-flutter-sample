@@ -10,7 +10,7 @@
 
 ## Minimum Requirements
 
-1. **Android Studio 3.0** but preferably the latest version
+1. **Android Studio Hedgehog** but preferably the latest version
 2. Minimum Android SDK: **API 21** or **Android 5.0**
 3. **Xcode 10.2** but preferably the latest version
 4. Minimum Target iOS Deployment: **iOS 12**

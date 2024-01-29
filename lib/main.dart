@@ -40,6 +40,7 @@ class _MainPageState extends State<MainPage> {
   bool loggingEnabled = true;
   bool balanceRetrievalEnabled = false;
   bool showLogging = true;
+  bool pdfUploadEnabled = false;
 
   static const MethodChannel statementChannel = MethodChannel('com.brankas.tap/statement');
 
@@ -77,7 +78,8 @@ class _MainPageState extends State<MainPage> {
         statementRetrievalEnabled ? startDate.millisecondsSinceEpoch : null,
         "endDate" :
         statementRetrievalEnabled ? endDate.millisecondsSinceEpoch : null,
-        "logging" : loggingEnabled, "balanceRetrieval" : balanceRetrievalEnabled});
+        "logging" : loggingEnabled, "balanceRetrieval" : balanceRetrievalEnabled,
+        "pdfUpload": pdfUploadEnabled});
     } on PlatformException catch (e) {
 
     }
@@ -137,7 +139,7 @@ class _MainPageState extends State<MainPage> {
   }
 
   void autoFillDetails() {
-    apiKeyController.text = "";
+    apiKeyController.text = "Lc032K0x0dnPwR46GwwiVEwJ6R21pkIljqZPrvkQhnS5P2H46xo5fLm5LNjCVi09";
     externalIDController.text = DateTime.now().toString();
     orgNameController.text = "Org Name";
     successURLController.text = "https://success.com";
@@ -187,6 +189,12 @@ class _MainPageState extends State<MainPage> {
     setState(() {
       balanceRetrievalEnabled = value;
       getBanks();
+    });
+  }
+
+  void togglePdfUpload(bool value) {
+    setState(() {
+      pdfUploadEnabled = value;
     });
   }
 
@@ -298,6 +306,14 @@ class _MainPageState extends State<MainPage> {
                           const Text("Enable Balance Retrieval"),
                           Switch(onChanged: toggleBalanceRetrieval,
                               value: balanceRetrievalEnabled,
+                              activeColor: Colors.purple)
+                        ]
+                    ),
+                    Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          const Text("Enable PDF Upload"),
+                          Switch(onChanged: togglePdfUpload,
+                              value: pdfUploadEnabled,
                               activeColor: Colors.purple)
                         ]
                     ),

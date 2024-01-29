@@ -47,7 +47,7 @@ import AppTrackingTransparency
           switch call.method {
             case "checkout" :
               if let args = call.arguments as? Dictionary<String, Any> {
-                  StatementTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: true, isLoggingEnabled: args["logging"] as? Bool ?? true)
+                  StatementTapSF.shared.initialize(apiKey: args["apiKey"] as? String ?? "", certPath: nil, isDebug: false, isLoggingEnabled: args["logging"] as? Bool ?? true)
                   
                   let countryCode = self.getCountry(country: args["country"] as? String ?? "")
 
@@ -66,6 +66,7 @@ import AppTrackingTransparency
                   request.useRememberMe = args["rememberMe"] as? Bool ?? false
                   request.isAutoConsent = args["autoConsent"] as? Bool ?? false
                   request.includeBalance = args["balanceRetrieval"] as? Bool ?? false
+                  request.hasPdfUpload = args["pdfUpload"] as? Bool ?? false
                   request.bankCodes = bankCodes
                   
                   var startDate: Date? = nil
