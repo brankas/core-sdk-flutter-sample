@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Allow application to access Photo Library to save QR Image</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Lets the app track down the transactions</string>
 	<key>CFBundleDevelopmentRegion</key>
