@@ -1,4 +1,5 @@
 {
+  "originHash" : "ba9bbc2c7104fc7b7002f5b64defe2773aeb5c37e91082b0ac07f622f5512b82",
   "pins" : [
     {
       "identity" : "core-sdk-ios",
@@ -6,9 +7,9 @@
       "location" : "https://github.com/brankas/core-sdk-ios",
       "state" : {
         "branch" : "master",
-        "revision" : "62d3a86f5cdb231d9c6d060edfb369ca2d9f2b0f"
+        "revision" : "934e9ad62088ad61c36905bc1a1654c2ce17763f"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

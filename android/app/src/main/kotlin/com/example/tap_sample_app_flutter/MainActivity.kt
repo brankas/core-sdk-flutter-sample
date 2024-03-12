@@ -77,7 +77,8 @@ class MainActivity: FlutterActivity() {
                         CoreListener<String?> {
                         override fun onResult(data: String?, error: CoreError?) {
                             error?.let {
-                                Toast.makeText(this@MainActivity, it.errorMessage, Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@MainActivity, "${it.errorCode.getCode()} " +
+                                        "- ${it.errorCode.getErrorMessage()}", Toast.LENGTH_LONG).show()
                             }
                         }
 

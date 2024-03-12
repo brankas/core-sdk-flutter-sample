@@ -84,8 +84,8 @@ import AppTrackingTransparency
                   }
                   
                   do {
-                      let retrieveTransactions = { (transaction: Transaction?, error: String?) in
-                          self.setResult(data: transaction, error: error)
+                      let retrieveTransactions = { (transaction: Transaction?, error: DirectTapError?) in
+                          self.setResultCheckout(data: transaction, error: error)
                       }
                       try DirectTapSF.shared.checkoutWithinSameScreen(tapRequest: request, vc: controller, closure: retrieveTransactions, showWithinSameScreen: false, showBackButton: true)
                   } catch {
@@ -139,6 +139,27 @@ import AppTrackingTransparency
             showAlert(message: "Error: \(message)")
         }
     }
+    
+    private func setResultCheckout(data: Transaction?, error: DirectTapError?) {
+        if let transaction = data {
+            let date = DateFormatter()
+            date.dateFormat = "MMMM dd YYYY"
+
+            let bankFee = Float(transaction.bankFee.numInCents) ?? 0 / 100
+            let amount = Float(transaction.amount.numInCents) ?? 0 / 100
+            let finishedDate = date.string(from: transaction.finishedDate)
+
+            let fee = "\(transaction.bankFee.currency) \(bankFee)"
+            let payment = "\(transaction.amount.currency) \(amount)"
+
+            showAlert(message: "TRANSACTION (\(transaction.id))\nReference ID: \(transaction.referenceId)\nStatus: \(transaction.status)\nStatus Code: \(transaction.statusMessage ?? "") (\(transaction.statusCode))\nBank: \(transaction.bankCode) (\(transaction.country))\nAmount: \(payment)\nBank Fee:\(fee)\nDate: \(finishedDate)")
+        }
+        
+        if let directTapError = error {
+            showAlert(message: "Error: \(directTapError.errorCode) - \(directTapError.errorMessage)")
+        }
+    }
+
     
     func showAlert(message: String) {
         let alert = UIAlertController(title: "", message: message, preferredStyle: UIAlertController.Style.alert)
